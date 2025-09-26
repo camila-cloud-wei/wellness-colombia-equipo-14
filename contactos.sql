@@ -1,0 +1,9 @@
+CREATE TABLE contactos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    telefono VARCHAR(20),
+    servicio VARCHAR(255),
+    mensaje TEXT,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
