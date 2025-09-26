@@ -1,21 +1,41 @@
 <?php
 session_start();
+require_once __DIR__ . '/db.php';
 
-// Credenciales (puedes cambiarlas)
-$admin_user = "admin";
-$admin_pass = "Colombia2025!";
-
+// Espera una tabla `users` con campos id, username, password (hashed)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $user = $_POST["usuario"];
-    $pass = $_POST["clave"];
+  $user = isset($_POST["usuario"]) ? trim($_POST["usuario"]) : '';
+  $pass = isset($_POST["clave"]) ? $_POST["clave"] : '';
 
-    if ($user === $admin_user && $pass === $admin_pass) {
-        $_SESSION["loggedin"] = true;
-        header("Location: admin.php");
-        exit();
-    } else {
+  if ($user === '' || $pass === '') {
+    $error = "Usuario o contraseña incorrectos.";
+  } else {
+    $stmt = $mysqli->prepare('SELECT id, username, password FROM users WHERE username = ? LIMIT 1');
+    if ($stmt) {
+      $stmt->bind_param('s', $user);
+      $stmt->execute();
+      $result = $stmt->get_result();
+      if ($row = $result->fetch_assoc()) {
+        // password almacenada debe ser un hash (password_hash)
+        if (password_verify($pass, $row['password'])) {
+          // Autenticación exitosa
+          $_SESSION["loggedin"] = true;
+          $_SESSION["user_id"] = $row['id'];
+          $_SESSION["username"] = $row['username'];
+          header("Location: admin.php");
+          exit();
+        } else {
+          $error = "Usuario o contraseña incorrectos.";
+        }
+      } else {
         $error = "Usuario o contraseña incorrectos.";
+      }
+      $stmt->close();
+    } else {
+      error_log('DB prepare error: '. $mysqli->error);
+      $error = 'Error interno, inténtalo de nuevo más tarde.';
     }
+  }
 }
 ?>
 <!DOCTYPE html>
