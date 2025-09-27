@@ -1,21 +1,28 @@
 <?php
 session_start();
 if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
-    header("Location: login.php");
-    exit();
+  header("Location: login.php");
+  exit();
 }
 
-$servername = "sql302.infinityfree.com"; // Replace with your InfinityFree host
-$username   = "if0_40020474"; 
-$password   = "aoGZOI4wU74i3"; 
-$dbname     = "if0_40020474_travel_db";
+require_once __DIR__ . '/db.php';
 
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Error en la conexión: " . $conn->connect_error);
+// Mostrar todos los registros si el usuario es 'admin@gmail.com', si no, mostrar solo sus propios registros (username == email)
+$username = $_SESSION['username'] ?? null;
+// El administrador real ahora es 'admin@gmail.com'
+if ($username === 'admin@gmail.com') {
+  $result = $mysqli->query("SELECT * FROM contactos ORDER BY fecha DESC");
+} else {
+  $stmt = $mysqli->prepare("SELECT * FROM contactos WHERE email = ? ORDER BY fecha DESC");
+  if ($stmt) {
+    $stmt->bind_param('s', $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+  } else {
+    // Fallback: empty result set
+    $result = $mysqli->query("SELECT * FROM contactos WHERE 0");
+  }
 }
-
-$result = $conn->query("SELECT * FROM contactos ORDER BY fecha DESC");
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -58,4 +65,4 @@ $result = $conn->query("SELECT * FROM contactos ORDER BY fecha DESC");
   </table>
 </body>
 </html>
-<?php $conn->close(); ?>
+<?php $mysqli->close(); ?>
