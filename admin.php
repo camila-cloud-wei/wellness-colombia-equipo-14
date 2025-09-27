@@ -11,7 +11,7 @@ require_once __DIR__ . '/db.php';
 $username = $_SESSION['username'] ?? null;
 // El administrador real ahora es 'admin@gmail.com'
 if ($username === 'admin@gmail.com') {
-  $result = $mysqli->query("SELECT * FROM contactos ORDER BY fecha DESC");
+  $result = $mysqli->prepare("SELECT * FROM contactos ORDER BY fecha DESC");
 } else {
   $stmt = $mysqli->prepare("SELECT * FROM contactos WHERE email = ? ORDER BY fecha DESC");
   if ($stmt) {
@@ -20,7 +20,7 @@ if ($username === 'admin@gmail.com') {
     $result = $stmt->get_result();
   } else {
     // Fallback: empty result set
-    $result = $mysqli->query("SELECT * FROM contactos WHERE 0");
+    $result = $mysqli->prepare("SELECT * FROM contactos WHERE 0");
   }
 }
 ?>
