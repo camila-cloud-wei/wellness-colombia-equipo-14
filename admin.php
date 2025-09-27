@@ -9,15 +9,27 @@ require_once __DIR__ . '/db.php';
 
 // Mostrar todos los registros si el usuario es 'admin@gmail.com', si no, mostrar solo sus propios registros (username == email)
 $username = $_SESSION['username'] ?? null;
-// El administrador real ahora es 'admin@gmail.com'
-if ($username === 'admin@gmail.com') {
-  $result = $mysqli->prepare("SELECT * FROM contactos ORDER BY fecha DESC");
+// Control por rol: leer `role` desde la sesión (se estableció en el login)
+$role = $_SESSION['role'] ?? 'user';
+if ($role === 'admin') {
+  // Admin ve todos los registros
+  $stmt = $mysqli->prepare("SELECT * FROM contactos ORDER BY fecha DESC");
+  if ($stmt) {
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $stmt->close();
+  } else {
+    // Fallback: empty result set
+    $result = $mysqli->prepare("SELECT * FROM contactos WHERE 0");
+  }
 } else {
+  // Usuario normal: ver sólo sus propios contactos
   $stmt = $mysqli->prepare("SELECT * FROM contactos WHERE email = ? ORDER BY fecha DESC");
   if ($stmt) {
     $stmt->bind_param('s', $username);
     $stmt->execute();
     $result = $stmt->get_result();
+    $stmt->close();
   } else {
     // Fallback: empty result set
     $result = $mysqli->prepare("SELECT * FROM contactos WHERE 0");
