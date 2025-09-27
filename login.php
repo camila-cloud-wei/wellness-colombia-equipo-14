@@ -7,10 +7,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $user = isset($_POST["usuario"]) ? trim($_POST["usuario"]) : '';
   $pass = isset($_POST["clave"]) ? $_POST["clave"] : '';
 
-  if ($user === '' || $pass === '') {
+    if ($user === '' || $pass === '') {
     $error = "Usuario o contraseña incorrectos.";
   } else {
-    $stmt = $mysqli->prepare('SELECT id, username, password FROM users WHERE username = ? LIMIT 1');
+    // Traer también el campo `role` desde la tabla users
+    $stmt = $mysqli->prepare('SELECT id, username, password, role FROM users WHERE username = ? LIMIT 1');
     if ($stmt) {
       $stmt->bind_param('s', $user);
       $stmt->execute();
@@ -22,6 +23,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           $_SESSION["loggedin"] = true;
           $_SESSION["user_id"] = $row['id'];
           $_SESSION["username"] = $row['username'];
+          // Guardar rol en sesión; por defecto 'user' si no existe
+          $_SESSION["role"] = isset($row['role']) && $row['role'] !== '' ? $row['role'] : 'user';
           header("Location: admin.php");
           exit();
         } else {

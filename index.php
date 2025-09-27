@@ -14,9 +14,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $contrasena_plain = isset($_POST["contrasena"]) ? $_POST["contrasena"] : null;
     $contrasena_hash = $contrasena_plain ? password_hash($contrasena_plain, PASSWORD_DEFAULT) : null;
 
-    if ($nombre === '' || $email === '') {
-        $error = 'El nombre y el correo son requeridos.';
-    } else {
+    // Array de errores
+    $errores = [];
+
+    // Validaciones
+    if (empty($nombre) || strlen($nombre) > 100) {
+        $errores[] = "El nombre es obligatorio y debe tener menos de 100 caracteres.";
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errores[] = "El correo electrónico no es válido.";
+    }
+
+    if (empty($telefono) || !preg_match('/^[0-9]{7,15}$/', $telefono)) {
+        $errores[] = "El teléfono es obligatorio y debe tener entre 7 y 15 dígitos numéricos.";
+    }
+
+    // Si hay errores, mostramos y detenemos ejecución
+    if (!empty($errores)) {
+        foreach ($errores as $err) {
+            echo "<p style='color:red;'>$err</p>";
+        }
+        exit(); // No seguir con el insert
+    }
         // Preparar e insertar con manejo de errores
     $stmt = $mysqli->prepare("INSERT INTO contactos (nombre, email, contrasena, telefono, servicio, mensaje) VALUES (?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
@@ -123,7 +143,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
         $mysqli->close();
-    }
 }
 ?>
 <!DOCTYPE html>
