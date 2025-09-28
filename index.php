@@ -425,15 +425,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 
                 <div class="footer-column">
                     <h3>Contacto</h3>
-                    <p><i class="fas fa-map-marker-alt"></i> Bogotá, Colombia</p>
-                    <p><i class="fas fa-phone"></i> +57 1 234 5678</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Medellin, Colombia</p>
+                    <p><i class="fas fa-phone"></i> +57 60 234 5678</p>
                     <p><i class="fas fa-envelope"></i> info@wellnesscolombia.com</p>
                     <p><i class="fas fa-clock"></i> Lun - Vie: 9:00 - 18:00</p>
                 </div>
             </div>
             
             <div class="copyright">
-                <p>&copy; 2023 Wellness in Colombia. Todos los derechos reservados.</p>
+                <p>&copy; <?php echo date("Y"); ?> Wellness in Colombia. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>
