@@ -51,7 +51,10 @@ if ($role === 'admin') {
   </style>
 </head>
 <body>
-  <a class="logout" href="logout.php">Cerrar sesión</a>
+  <div style="float:right; margin-bottom:20px; display:flex; gap:8px;">
+    <a class="logout" href="logout.php">Cerrar sesión</a>
+    <a class="download" href="export.php" style="background:#2e8b57;color:white;padding:10px 12px;border-radius:8px;text-decoration:none;">Descargar CSV</a>
+  </div>
   <h1>Solicitudes de Contacto</h1>
   <table>
     <tr>
