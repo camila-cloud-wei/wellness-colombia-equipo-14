@@ -31,12 +31,61 @@ Está desarrollado en PHP con base de datos MySQL y desplegado en InfinityFree.*
 - Captura del sitio funcionando (`capturas/sitio.png`)
 
 ## 📂 Archivos Entregados
-- `codigo.zip` – Código completo del proyecto  
-- `dump.sql` – Base de datos exportada  
-- `qa-report.md` – Reporte de pruebas realizadas  
+- `codigo.zip` – Código completo del proyecto
+│   admin.php
+│   contactos.sql
+│   create_admin.php
+│   create_tables.sql
+│   db.php
+│   gracias.html
+│   index.php
+│   login.php
+│   logout.php
+│   README.md
+│
+└───static
+    │   script.js
+    │   style.css
+    │
+    └───images
+            contact-bg.svg
+            header-hero.svg
+            service-1.svg
+            service-2.svg
+            service-3.svg
+            testimonial-bg.svg
+  
+- `dump.sql` – Base de datos exportada
+-- Table structure for table `contactos`
+CREATE TABLE `contactos` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `nombre` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `contrasena` varchar(255) DEFAULT NULL,
+  `telefono` varchar(50) DEFAULT NULL,
+  `servicio` varchar(100) DEFAULT NULL,
+  `mensaje` text DEFAULT NULL,
+  `fecha` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table structure for table `users`
+CREATE TABLE `users` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `username` varchar(100) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `role` varchar(32) NOT NULL DEFAULT 'user'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+- `qa-report.md` – Reporte de pruebas realizadas
 - Carpeta `capturas/` – Evidencias gráficas
   
 <img width="1919" height="947" alt="image" src="https://github.com/user-attachments/assets/f7f06f78-0fa0-422e-ad84-f765e2baceff" />
+
+<img width="549" height="473" alt="image" src="https://github.com/user-attachments/assets/bb5e22cb-fe34-4ee8-9faf-13c4bf59457c" />
+
+<img width="1919" height="940" alt="image" src="https://github.com/user-attachments/assets/585d3f86-2d04-421a-97f1-d3da32eb78cf" />
+
 
 ## 📝 Changelog (registro de cambios)
 - Jose David Arrieta Torres / Luis Alejandro Espinal Arango – Implementó validaciones y seguridad con prepared statements.  
