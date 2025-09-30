@@ -58,15 +58,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // No continuar con la inserción si hay errores
             $error = implode("<br>", $errors);
         } else {
-            // Defensive guard: double-check required fields before attempting DB insert
-            if ($nombre === '' || $email === '' || $servicio === '') {
-                // Populate field_errors if somehow missing and prevent insert
-                if ($nombre === '') $field_errors['nombre'] = 'El nombre es requerido.';
-                if ($email === '') $field_errors['email'] = 'El correo es requerido.';
-                if ($servicio === '' || $servicio === null) $field_errors['servicio'] = 'Debes seleccionar un servicio.';
-                $error = 'Faltan campos obligatorios. Corrige los errores y vuelve a intentar.';
-                error_log('Form not inserted: required fields missing.');
-            } else {
             // Preparar e insertar con manejo de errores (prepared statements para evitar SQL injection)
             $stmt = $mysqli->prepare("INSERT INTO contactos (nombre, email, contrasena, telefono, servicio, mensaje) VALUES (?, ?, ?, ?, ?, ?)");
             if (!$stmt) {
