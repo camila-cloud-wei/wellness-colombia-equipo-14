@@ -32,6 +32,7 @@ Está desarrollado en PHP con base de datos MySQL y desplegado en InfinityFree.*
 
 ## 📂 Archivos Entregados
 - `codigo.zip` – Código completo del proyecto
+```
 │   admin.php
 │   contactos.sql
 │   create_admin.php
@@ -54,8 +55,9 @@ Está desarrollado en PHP con base de datos MySQL y desplegado en InfinityFree.*
             service-2.svg
             service-3.svg
             testimonial-bg.svg
-  
+ ``` 
 - `dump.sql` – Base de datos exportada
+```sql  
 -- Table structure for table `contactos`
 CREATE TABLE `contactos` (
   `id` int(10) UNSIGNED NOT NULL,
@@ -76,6 +78,7 @@ CREATE TABLE `users` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `role` varchar(32) NOT NULL DEFAULT 'user'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```sql
 
 - `qa-report.md` – Reporte de pruebas realizadas
 - Carpeta `capturas/` – Evidencias gráficas
