@@ -125,13 +125,12 @@ CREATE TABLE `users` (
 
 4. ¿Cómo resolverían escalabilidad y alta disponibilidad en la nube?  
    > - Estas soluciones pueden variar dependiendo del proveedor, aunque conceptualmente entre proveedores de cloud la finalidad es similar. Una de las ventajas más significativas de cloud es la distrubución de múltiples data centers en varias regiones y países, esto permite la alta disponibilidad con conceptos como Avalability Zones y asignación automática de recursos con modelo de pago pay-as-you-go para escalabilidad. 
-
-    > - Para efectos prácticos, resolveríamos se usaría AWS como ejemplo. AWS ofrece escalamiento horizontal o vertical con servicios como Amazon EC2 Auto Scaling y AWS Auto Scaling, además ofrece servicios de seguridad como  WAF, y ACL’s para prevenir ataques de DDoS y servicios de red como CDN’s, Load Balancers  y ACL’s para distribuir el tráfico y brindar un servicio de baja latencia.   Estos servicios se basan en detección de patrones o umbrales para la ejecución de acciones que permitan el escalamiento y la alta disponibilidad.
-
      > - Para la escalabilidad y disponibilidad del sitio se asegurará que: 
         > - La creación del servicio de hosting en una región que geográficamente esté más cerca de donde se encuentran los clientes o potenciales clientes que accederán el sitio. 
         > - Se creará el servicio con la opción de General purpose para tomar ventaja de las Availability Zones controladas por AWS, ya que automáticamente se crearán los objetos del sitio a lo largo de múltiples AZ como medida redundante. AWS provee 99.99% de disponibilidad para S3.
-
+ > - Se utilizarán soluciones como:
+   >  - **Azure Frontdoor o Amazon CloudFront + AWS Global Accelerator** para el balanceo de carga con CDN, caché y enrutamiento.
+   >  - **Azure Kubernetes Service con HPA o AWS ECS / Elastic Kubernetes Service (EKS) +  Auto Scaling Groups (ASG)** para escalamiento. 
 
 5. Plan de migración en 4–5 pasos desde InfinityFree hacia un servicio en la nube.  
    > 1. Descargaría los archivos de la página utilizando el FTP y generaríamos un backup completo de la base de datos con schemes y datos desde PHPMyAdmin
