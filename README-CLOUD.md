@@ -109,8 +109,9 @@ CREATE TABLE `users` (
      > - **Limitación de almacenamiento**: El tier free ofrece solo 5gb de almacenamiento. 
     >  - **Limitación de ancho de banda del sitio y escalamiento**: Si el sitio recibe cierta cantidad de peticiones que exceda el límite de ancho de banda, puede representar lentitud o caída del             sitio. No se tiene ningún control sobre la gestión de recursos para escalar la aplicación web.
      > - **Limitación de proveedor de base de datos y lenguaje backend**: Solo se soporta PHP como lenguage de backend y MySQL como proveedor de base de datos, esto puede restringir el         uso de otros lenguages y bases de datos que representen más funcionalidades para el sitio. 
-     > - **Limitación de opciones de despliegue**: Solo se soporta FTP (No FTPS) para la subida de archivos al sitio y no se permite crear una conexión privada para hacer conexión a la base de datos y generar despliegos automáticos.      
-    > - **Limitación de soporte**: InfinityFree no ofrece soporte directo como email o teléfono. 
+     > - **Limitación de opciones de despliegue**: Solo se soporta FTP (No FTPS) para la subida de archivos al sitio y no se permite crear una conexión privada para hacer conexión a la base de datos y generar despliegos automáticos.
+     >  - **Limitación en gestión de identidades y secretos dentro de la aplicación**:  Se compartió la contraseña de una cuenta con los demás compañeros para utilizar el hosting y los valores de conexión de la base de datos se dejaron quemados dentro del código del sitio.
+     > - **Limitación de soporte**: InfinityFree no ofrece soporte directo como email o teléfono. 
 
 3. ¿Qué servicio equivalente usarían en AWS, Azure o GCP para:  
    - Archivos estáticos  
