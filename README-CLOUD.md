@@ -78,7 +78,7 @@ CREATE TABLE `users` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `role` varchar(32) NOT NULL DEFAULT 'user'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```sql
+```
 
 - `qa-report.md` – Reporte de pruebas realizadas
 - Carpeta `capturas/` – Evidencias gráficas
