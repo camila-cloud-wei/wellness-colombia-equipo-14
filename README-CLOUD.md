@@ -129,8 +129,8 @@ CREATE TABLE `users` (
         > - La creación del servicio de hosting en una región que geográficamente esté más cerca de donde se encuentran los clientes o potenciales clientes que accederán el sitio. 
         > - Se creará el servicio con la opción de General purpose para tomar ventaja de las Availability Zones controladas por AWS, ya que automáticamente se crearán los objetos del sitio a lo largo de múltiples AZ como medida redundante. AWS provee 99.99% de disponibilidad para S3.
  > - Se utilizarán soluciones como:
-   >  - **Azure Frontdoor o Amazon CloudFront + AWS Global Accelerator** para el balanceo de carga con CDN, caché y enrutamiento.
-   >  - **Azure Kubernetes Service con HPA o AWS ECS / Elastic Kubernetes Service (EKS) +  Auto Scaling Groups (ASG)** para escalamiento. 
+   > - **Azure Frontdoor o Amazon CloudFront + AWS Global Accelerator** para el balanceo de carga con CDN, caché y enrutamiento.
+   > - **Azure Kubernetes Service con HPA o AWS ECS / Elastic Kubernetes Service (EKS) +  Auto Scaling Groups (ASG)** para escalamiento. 
 
 5. Plan de migración en 4–5 pasos desde InfinityFree hacia un servicio en la nube.  
    > 1. Descargaría los archivos de la página utilizando el FTP y generaríamos un backup completo de la base de datos con schemes y datos desde PHPMyAdmin
