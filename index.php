@@ -1,128 +1,170 @@
 <?php
+session_start();
 // Guardar datos en la base
 // Para depuración temporal activa $debug = true. Desactiva en producción.
 $debug = true;
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     require_once __DIR__ . '/db.php'; // $mysqli disponible
 
-    // Sanitizar/validar entradas básicas
+    // Recoger y sanitizar entradas básicas
     $nombre   = isset($_POST["nombre"]) ? trim($_POST["nombre"]) : '';
     $email    = isset($_POST["email"]) ? trim($_POST["email"]) : '';
-    $telefono = isset($_POST["telefono"]) ? trim($_POST["telefono"]) : null;
-    $servicio = isset($_POST["servicio"]) ? trim($_POST["servicio"]) : null;
-    $mensaje  = isset($_POST["mensaje"]) ? trim($_POST["mensaje"]) : null;
-    $contrasena_plain = isset($_POST["contrasena"]) ? $_POST["contrasena"] : null;
-    $contrasena_hash = $contrasena_plain ? password_hash($contrasena_plain, PASSWORD_DEFAULT) : null;
+    $telefono = isset($_POST["telefono"]) ? trim($_POST["telefono"]) : '';
+    $servicio = isset($_POST["servicio"]) ? trim($_POST["servicio"]) : '';
+    $mensaje  = isset($_POST["mensaje"]) ? trim($_POST["mensaje"]) : '';
+    $contrasena_plain = isset($_POST["contrasena"]) ? $_POST["contrasena"] : '';
+    $contrasena_hash = $contrasena_plain !== '' ? password_hash($contrasena_plain, PASSWORD_DEFAULT) : null;
 
-    if ($nombre === '' || $email === '') {
-        $error = 'El nombre y el correo son requeridos.';
+    // CSRF token check
+    if (empty($_POST['csrf_token']) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $error = 'Token de seguridad inválido. Intenta recargar la página y enviar de nuevo.';
     } else {
-        // Preparar e insertar con manejo de errores
-    $stmt = $mysqli->prepare("INSERT INTO contactos (nombre, email, contrasena, telefono, servicio, mensaje) VALUES (?, ?, ?, ?, ?, ?)");
-        if (!$stmt) {
-            $err = $mysqli->error;
-            error_log('DB prepare error: ' . $err);
-            if ($debug) {
-                // Mostrar error en pantalla sólo en debugging
-                $error = 'Error en la preparación de la consulta: ' . $err;
-            } else {
-                $error = 'Error interno. Intenta de nuevo más tarde.';
-            }
-        } else {
-            // Start transaction so both inserts/updates (contactos + users) succeed together
-            $mysqli->begin_transaction();
-            $ok = true;
+        $errors = [];
+        $field_errors = [];
 
-            if (!$stmt->bind_param("ssssss", $nombre, $email, $contrasena_hash, $telefono, $servicio, $mensaje)) {
-                $err = $stmt->error;
-                error_log('DB bind_param error: ' . $err);
-                $ok = false;
-            }
+        // Validaciones obligatorias (con errores por campo)
+        if ($nombre === '') {
+            $field_errors['nombre'] = 'El nombre es requerido.';
+            $errors[] = 'El nombre es requerido.';
+        }
+        if ($email === '') {
+            $field_errors['email'] = 'El correo es requerido.';
+            $errors[] = 'El correo es requerido.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $field_errors['email'] = 'El correo no tiene un formato válido.';
+            $errors[] = 'El correo no tiene un formato válido.';
+        }
+        if ($servicio === '' || $servicio === null) {
+            $field_errors['servicio'] = 'Debes seleccionar un servicio.';
+            $errors[] = 'Debes seleccionar un servicio.';
+        }
 
-            if ($ok && !$stmt->execute()) {
-                $err = $stmt->error;
-                error_log('DB execute error (contactos): ' . $err);
-                $ok = false;
-            }
-
-            if ($ok) {
-                // If contact insert succeeded, proceed to create/update users table
-                $contact_id = $mysqli->insert_id;
-
-                // Decide password for users: if none provided, generate a random one
-                if (!$contrasena_plain) {
-                    try {
-                        $contrasena_plain = bin2hex(random_bytes(6));
-                    } catch (Exception $e) {
-                        // fallback
-                        $contrasena_plain = substr(md5(uniqid((string)mt_rand(), true)), 0, 12);
-                    }
-                    $contrasena_hash = password_hash($contrasena_plain, PASSWORD_DEFAULT);
-                }
-
-                // Check if user exists by username=email
-                $ucheck = $mysqli->prepare('SELECT id FROM users WHERE username = ? LIMIT 1');
-                if ($ucheck) {
-                    $ucheck->bind_param('s', $email);
-                    $ucheck->execute();
-                    $ures = $ucheck->get_result();
-                    if ($urow = $ures->fetch_assoc()) {
-                        // Update password only if the form provided one
-                        if (isset($_POST['contrasena']) && $_POST['contrasena'] !== '') {
-                            $uid = $urow['id'];
-                            $uupdate = $mysqli->prepare('UPDATE users SET password = ? WHERE id = ?');
-                            if ($uupdate) {
-                                $uupdate->bind_param('si', $contrasena_hash, $uid);
-                                if (!$uupdate->execute()) {
-                                    error_log('DB execute error (users update): ' . $uupdate->error);
-                                    $ok = false;
-                                }
-                                $uupdate->close();
-                            } else {
-                                error_log('DB prepare error (users update): ' . $mysqli->error);
-                                $ok = false;
-                            }
-                        }
-                    } else {
-                        // Insert new user (username = email)
-                        $uinsert = $mysqli->prepare('INSERT INTO users (username, password) VALUES (?, ?)');
-                        if ($uinsert) {
-                            $uinsert->bind_param('ss', $email, $contrasena_hash);
-                            if (!$uinsert->execute()) {
-                                error_log('DB execute error (users insert): ' . $uinsert->error);
-                                $ok = false;
-                            }
-                            $uinsert->close();
-                        } else {
-                            error_log('DB prepare error (users insert): ' . $mysqli->error);
-                            $ok = false;
-                        }
-                    }
-                    $ucheck->close();
-                } else {
-                    error_log('DB prepare error (users check): ' . $mysqli->error);
-                    $ok = false;
-                }
-            }
-
-            if ($ok) {
-                $stmt->close();
-                $mysqli->commit();
-                $mysqli->close();
-                header("Location: gracias.html");
-                exit();
-            } else {
-                $mysqli->rollback();
-                if (isset($stmt) && $stmt) $stmt->close();
-                $mysqli->close();
-                if ($debug) {
-                    $error = 'Ocurrió un error al guardar los datos. Revisa los logs del servidor.';
-                } else {
-                    $error = 'No se pudo guardar la información. Intenta de nuevo.';
-                }
+        // Teléfono opcional pero si se envía validar caracteres (mínimo 6 dígitos)
+        if ($telefono !== '') {
+            // Permite dígitos, espacios, +, -, paréntesis
+            if (!preg_match('/^[0-9\+\-\s\(\)]{6,20}$/', $telefono)) {
+                $field_errors['telefono'] = 'El teléfono no tiene un formato válido.';
+                $errors[] = 'El teléfono no tiene un formato válido.';
             }
         }
-        $mysqli->close();
+
+        // Contraseña opcional pero si viene, exigir longitud mínima
+        if ($contrasena_plain !== '' && strlen($contrasena_plain) < 6) {
+            $field_errors['contrasena'] = 'La contraseña debe tener al menos 6 caracteres.';
+            $errors[] = 'La contraseña debe tener al menos 6 caracteres.';
+        }
+
+        if (!empty($errors)) {
+            // No continuar con la inserción si hay errores
+            $error = implode("<br>", $errors);
+        } else {
+            // Preparar e insertar con manejo de errores (prepared statements para evitar SQL injection)
+            $stmt = $mysqli->prepare("INSERT INTO contactos (nombre, email, contrasena, telefono, servicio, mensaje) VALUES (?, ?, ?, ?, ?, ?)");
+            if (!$stmt) {
+                $err = $mysqli->error;
+                error_log('DB prepare error: ' . $err);
+                if ($debug) {
+                    // Mostrar error en pantalla sólo en debugging
+                    $error = 'Error en la preparación de la consulta: ' . $err;
+                } else {
+                    $error = 'Error interno. Intenta de nuevo más tarde.';
+                }
+            } else {
+                // Start transaction so both inserts/updates (contactos + users) succeed together
+                $mysqli->begin_transaction();
+                $ok = true;
+
+                if (!$stmt->bind_param("ssssss", $nombre, $email, $contrasena_hash, $telefono, $servicio, $mensaje)) {
+                    $err = $stmt->error;
+                    error_log('DB bind_param error: ' . $err);
+                    $ok = false;
+                }
+
+                if ($ok && !$stmt->execute()) {
+                    $err = $stmt->error;
+                    error_log('DB execute error (contactos): ' . $err);
+                    $ok = false;
+                }
+
+                if ($ok) {
+                    // If contact insert succeeded, proceed to create/update users table
+                    $contact_id = $mysqli->insert_id;
+
+                    // Decide password for users: if none provided, generate a random one
+                    if ($contrasena_plain === '') {
+                        try {
+                            $contrasena_plain = bin2hex(random_bytes(6));
+                        } catch (Exception $e) {
+                            // fallback
+                            $contrasena_plain = substr(md5(uniqid((string)mt_rand(), true)), 0, 12);
+                        }
+                        $contrasena_hash = password_hash($contrasena_plain, PASSWORD_DEFAULT);
+                    }
+
+                    // Check if user exists by username=email
+                    $ucheck = $mysqli->prepare('SELECT id FROM users WHERE username = ? LIMIT 1');
+                    if ($ucheck) {
+                        $ucheck->bind_param('s', $email);
+                        $ucheck->execute();
+                        $ures = $ucheck->get_result();
+                        if ($urow = $ures->fetch_assoc()) {
+                            // Update password only if the form provided one
+                            if (isset($_POST['contrasena']) && $_POST['contrasena'] !== '') {
+                                $uid = $urow['id'];
+                                $uupdate = $mysqli->prepare('UPDATE users SET password = ? WHERE id = ?');
+                                if ($uupdate) {
+                                    $uupdate->bind_param('si', $contrasena_hash, $uid);
+                                    if (!$uupdate->execute()) {
+                                        error_log('DB execute error (users update): ' . $uupdate->error);
+                                        $ok = false;
+                                    }
+                                    $uupdate->close();
+                                } else {
+                                    error_log('DB prepare error (users update): ' . $mysqli->error);
+                                    $ok = false;
+                                }
+                            }
+                        } else {
+                            // Insert new user (username = email)
+                            $uinsert = $mysqli->prepare('INSERT INTO users (username, password) VALUES (?, ?)');
+                            if ($uinsert) {
+                                $uinsert->bind_param('ss', $email, $contrasena_hash);
+                                if (!$uinsert->execute()) {
+                                    error_log('DB execute error (users insert): ' . $uinsert->error);
+                                    $ok = false;
+                                }
+                                $uinsert->close();
+                            } else {
+                                error_log('DB prepare error (users insert): ' . $mysqli->error);
+                                $ok = false;
+                            }
+                        }
+                        $ucheck->close();
+                    } else {
+                        error_log('DB prepare error (users check): ' . $mysqli->error);
+                        $ok = false;
+                    }
+                }
+
+                if ($ok) {
+                    $stmt->close();
+                    $mysqli->commit();
+                    $mysqli->close();
+                    header("Location: gracias.html");
+                    exit();
+                } else {
+                    $mysqli->rollback();
+                    if (isset($stmt) && $stmt) $stmt->close();
+                    $mysqli->close();
+                    if ($debug) {
+                        $error = 'Ocurrió un error al guardar los datos. Revisa los logs del servidor.';
+                    } else {
+                        $error = 'No se pudo guardar la información. Intenta de nuevo.';
+                    }
+                }
+            }
+            $mysqli->close();
+        }
     }
 }
 ?>
@@ -329,26 +371,48 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             <div class="form-container">
                 <h3 class="form-title">Solicitar Consulta</h3>
-                <form action="" method="POST">
+                        <?php
+                        // Ensure CSRF token exists for the session
+                        if (empty($_SESSION['csrf_token'])) {
+                            try {
+                                $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+                            } catch (Exception $e) {
+                                $_SESSION['csrf_token'] = bin2hex(openssl_random_pseudo_bytes(16));
+                            }
+                        }
+                        // Helper to escape output
+                        function e($v) { return htmlspecialchars($v ?? '', ENT_QUOTES, 'UTF-8'); }
+                        ?>
+                        <form action="" method="POST">
+                            <input type="hidden" name="csrf_token" value="<?php echo e($_SESSION['csrf_token']); ?>">
                     <div class="form-group floating-label-group">
-                        <input type="text" class="form-control" id="nombre" name="nombre" placeholder=" " required>
+                        <input type="text" class="form-control" id="nombre" name="nombre" placeholder=" " required value="<?php echo e(isset($nombre) ? $nombre : ''); ?>" style="<?php echo isset($field_errors['nombre']) ? 'outline: 2px solid #e53935;' : ''; ?>">
                         <label for="nombre" class="floating-label">Nombre Completo</label>
+                        <?php if (!empty($field_errors['nombre'])): ?>
+                            <div class="field-error" style="color:#b00020; font-size:0.9rem; margin-top:6px"><?php echo e($field_errors['nombre']); ?></div>
+                        <?php endif; ?>
                     </div>
                     
                     <div class="form-group floating-label-group">
-                        <input type="email" class="form-control" id="email" name="email" placeholder=" " required>
+                        <input type="email" class="form-control" id="email" name="email" placeholder=" " required value="<?php echo e(isset($email) ? $email : ''); ?>" style="<?php echo isset($field_errors['email']) ? 'outline: 2px solid #e53935;' : ''; ?>">
                         <label for="email" class="floating-label">Correo Electrónico</label>
+                        <?php if (!empty($field_errors['email'])): ?>
+                            <div class="field-error" style="color:#b00020; font-size:0.9rem; margin-top:6px"><?php echo e($field_errors['email']); ?></div>
+                        <?php endif; ?>
                     </div>
                     
                     <div class="form-group floating-label-group">
-                        <input type="tel" class="form-control" id="telefono" name="telefono" placeholder=" ">
+                        <input type="tel" class="form-control" id="telefono" name="telefono" placeholder=" " value="<?php echo e(isset($telefono) ? $telefono : ''); ?>" style="<?php echo isset($field_errors['telefono']) ? 'outline: 2px solid #e53935;' : ''; ?>">
                         <label for="telefono" class="floating-label">Teléfono (Opcional)</label>
+                        <?php if (!empty($field_errors['telefono'])): ?>
+                            <div class="field-error" style="color:#b00020; font-size:0.9rem; margin-top:6px"><?php echo e($field_errors['telefono']); ?></div>
+                        <?php endif; ?>
                     </div>
                     
                     <div class="form-group">
                         <label for="servicio">Servicio de Interés</label>
                         <select class="form-control" id="servicio" name="servicio" required>
-                            <option value="" disabled selected>Selecciona un servicio</option>
+                            <option value="" disabled <?php echo empty($servicio) ? 'selected' : ''; ?>>Selecciona un servicio</option>
                             <option value="medicina-estetica">Medicina Estética Avanzada</option>
                             <option value="rehabilitacion">Programas de Rehabilitación</option>
                             <option value="bienestar-mental">Bienestar Mental y Emocional</option>
@@ -357,16 +421,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </div>
                     
                     <div class="form-group floating-label-group">
-                        <textarea class="form-control" id="mensaje" name="mensaje" placeholder=" " rows="5"></textarea>
+                        <textarea class="form-control" id="mensaje" name="mensaje" placeholder=" " rows="5"><?php echo e(isset($mensaje) ? $mensaje : ''); ?></textarea>
                         <label for="mensaje" class="floating-label">Mensaje (Opcional)</label>
+                        <?php if (!empty($field_errors['mensaje'])): ?>
+                            <div class="field-error" style="color:#b00020; font-size:0.9rem; margin-top:6px"><?php echo e($field_errors['mensaje']); ?></div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="form-group floating-label-group">
-                        <input type="password" class="form-control" id="contrasena" name="contrasena" placeholder=" ">
+                        <input type="password" class="form-control" id="contrasena" name="contrasena" placeholder=" " style="<?php echo isset($field_errors['contrasena']) ? 'outline: 2px solid #e53935;' : ''; ?>">
                         <label for="contrasena" class="floating-label">Contraseña (Opcional)</label>
+                        <?php if (!empty($field_errors['contrasena'])): ?>
+                            <div class="field-error" style="color:#b00020; font-size:0.9rem; margin-top:6px"><?php echo e($field_errors['contrasena']); ?></div>
+                        <?php endif; ?>
                     </div>
                     
                     <button type="submit" class="btn btn-accent" style="width: 100%;">Enviar Solicitud</button>
+                    <?php if (!empty($error)): ?>
+                        <div class="form-error" style="color: #b00020; margin-top: 12px;">
+                            <?php echo $error; // already escaped pieces via e() when injected above ?>
+                        </div>
+                    <?php endif; ?>
                 </form>
             </div>
             
