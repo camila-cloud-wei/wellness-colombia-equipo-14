@@ -34,7 +34,9 @@ Está desarrollado en PHP con base de datos MySQL y desplegado en InfinityFree.*
 - `codigo.zip` – Código completo del proyecto  
 - `dump.sql` – Base de datos exportada  
 - `qa-report.md` – Reporte de pruebas realizadas  
-- Carpeta `capturas/` – Evidencias gráficas  
+- Carpeta `capturas/` – Evidencias gráficas
+  
+<img width="1919" height="947" alt="image" src="https://github.com/user-attachments/assets/f7f06f78-0fa0-422e-ad84-f765e2baceff" />
 
 ## 📝 Changelog (registro de cambios)
 - Jose David Arrieta Torres / Luis Alejandro Espinal Arango – Implementó validaciones y seguridad con prepared statements.  
